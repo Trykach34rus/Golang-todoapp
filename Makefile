@@ -40,8 +40,8 @@ env-port-forwarder-down:
 env-cleanup:
 	@read -p "Очистить все volume файлы окружения? Опасность утери данных. [y/N]: " ans; \
 	if [ "$$ans" = "y" ]; then \
-		docker-compose down todoapp-postgres && \
-		rm -rf out/pgdata && \
+		docker-compose down todoapp-postgres port-forwarder && \
+		rm -rf ${PROJECT_ROOT}/out/pgdata && \
 		echo "Файлы окружения удалены"; \
 	else \
 		echo "Очистка окружения отменена"; \
@@ -98,3 +98,11 @@ migrate-down:
 	$(MAKE) migrate-action action=down
 # Ручной :
 # docker-compose run --rm todoapp-postgres-migrate -path=/migrations -database="postgres://test-user-123:test-posgres-password-456@todoapp-postgres:5432/test_db?sslmode=disable" down 1
+
+todoapp-run:
+  @export LOGER_FOLDER = ${PROJECT_ROOT}/out/logs && \
+	export POSTGRES_HOST = localhost &&\
+	go mod tidy && \
+  go run ${PROJECT_ROOT}/cmd/todoapp/main.go
+
+
