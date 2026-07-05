@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	Addr           string `envcofing:"ADDR" required:"true"`
-	ShutdownTimeout time.Duration `envcofing:"SHUTDOWN_TIMEOUT" required:"true"`
+	ShutdownTimeout time.Duration `envcofing:"SHUTDOWN_TIMEOUT" default:"30s"`
 }
 
 
