@@ -4,4 +4,6 @@ import "errors"
 
 var (
 	ErrNoRows = errors.New("no rows")
+	ErrViolatesForeingKey = errors.New("err violates foreing key")
+	ErrUnknown = errors.New("unknown")
 )

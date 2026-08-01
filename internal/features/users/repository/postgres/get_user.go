@@ -44,7 +44,8 @@ func (r *UserRepository)GetUser(
 			return domain.User{},fmt.Errorf(
 				"user with id='%d': %w ",
 				id,
-				core_errors.ErrNotFound) 
+				core_errors.ErrNotFound,
+				) 
 		}
 		return domain.User{}, fmt.Errorf("scan error: %w",err)
 	}
