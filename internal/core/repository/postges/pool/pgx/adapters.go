@@ -2,6 +2,7 @@ package core_pgx_pool
 
 import (
 	"errors"
+	"fmt"
 
 	core_postgres_pool "github.com/Trykach34rus/Golang-todoapp/internal/core/repository/postges/pool"
 	"github.com/jackc/pgx/v5"
@@ -25,12 +26,39 @@ func (r pgxRow) Scan(dest ... any) error  {
 	err := r.Row.Scan(dest...)
 
 	if err != nil {
-		if errors.Is(err,pgx.ErrNoRows){
+		return  mapErrors(err)
+
+	}
+	return nil
+}
+
+
+
+func mapErrors(err error) error {
+
+		const (
+		pgxViolatesForeingKeyErrorCode = "23503"
+	)
+
+	if errors.Is(err,pgx.ErrNoRows){
 			return core_postgres_pool.ErrNoRows
-		}
-		return err 
 	}
 
-	return nil
+	var pgErr *pgconn.PgError
 
+	if errors.As(err, &pgErr) {
+		if pgErr.Code == pgxViolatesForeingKeyErrorCode {
+			return fmt.Errorf(
+				"%v: %w",
+				err,
+				core_postgres_pool.ErrViolatesForeingKey,
+			)
+		}
+	}
+
+	return fmt.Errorf(
+		"%v:%w",
+		err,
+		core_postgres_pool.ErrUnknown,
+	)
 }
