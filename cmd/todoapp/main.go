@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	core_config "github.com/Trykach34rus/Golang-todoapp/internal/core/config"
 	core_logger "github.com/Trykach34rus/Golang-todoapp/internal/core/logger"
 	core_pgx_pool "github.com/Trykach34rus/Golang-todoapp/internal/core/repository/postges/pool/pgx"
 	core_http_middleware "github.com/Trykach34rus/Golang-todoapp/internal/core/transport/http/middleware"
@@ -22,14 +23,10 @@ import (
 )
 
 
-var (
-	timeZone = time.UTC
-)
-
-
 func main() {
+	cfg := core_config.NewConfigMust()
 
-	time.Local = timeZone
+	time.Local = cfg.TimeZone
 
 	ctx,cancel := signal.NotifyContext(
 		context.Background(),
@@ -45,7 +42,7 @@ func main() {
 
 	defer logger.Close()
 
-	logger.Debug("application time zone",zap.Any("zone",timeZone))
+	logger.Debug("application time zone",zap.Any("zone",time.Local))
 
 	logger.Debug("initiazling postges connection pool")	
 	pool,err := core_pgx_pool.NewPool(

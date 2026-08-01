@@ -99,6 +99,16 @@ migrate-down:
 # Ручной :
 # docker-compose run --rm todoapp-postgres-migrate -path=/migrations -database="postgres://test-user-123:test-posgres-password-456@todoapp-postgres:5432/test_db?sslmode=disable" down 1
 
+log-cleanup:
+  	@read -p "Очистить все log файлы ? Опасность утери логоф. [y/N]: " ans; \
+	if [ "$$ans" = "y" ]; then \
+		docker-compose down todoapp-postgres port-forwarder && \
+		rm -rf ${PROJECT_ROOT}/out/logs && \
+		echo "Файлы логоф удалены"; \
+	else \
+		echo "Очистка логоф отменена"; \
+	fi
+
 todoapp-run:
   @export LOGER_FOLDER = ${PROJECT_ROOT}/out/logs && \
 	export POSTGRES_HOST = localhost &&\
