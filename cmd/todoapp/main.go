@@ -13,6 +13,9 @@ import (
 	core_pgx_pool "github.com/Trykach34rus/Golang-todoapp/internal/core/repository/postges/pool/pgx"
 	core_http_middleware "github.com/Trykach34rus/Golang-todoapp/internal/core/transport/http/middleware"
 	core_http_server "github.com/Trykach34rus/Golang-todoapp/internal/core/transport/http/server"
+	postgres_statistics_repository "github.com/Trykach34rus/Golang-todoapp/internal/features/stasistics/repository/postgres"
+	service_statistics "github.com/Trykach34rus/Golang-todoapp/internal/features/stasistics/service"
+	statistics_tansport_http "github.com/Trykach34rus/Golang-todoapp/internal/features/stasistics/transport/http"
 	task_postgres_repository "github.com/Trykach34rus/Golang-todoapp/internal/features/tasks/repository/postgres"
 	task_service "github.com/Trykach34rus/Golang-todoapp/internal/features/tasks/service"
 	tasks_transport_http "github.com/Trykach34rus/Golang-todoapp/internal/features/tasks/transport/http"
@@ -58,7 +61,6 @@ func main() {
 
 
 	logger.Debug("initiazling feature",zap.String("feature","users"))
-
 	usersRepository := users_postgres_repository.NewUsersRepository(pool)
 	userService := users_service.NewUsersService(usersRepository)
 	usersTransportHTTP := users_transport_http.NewUsersHTTPHandler(userService)
@@ -68,6 +70,11 @@ func main() {
 	taskService := task_service.NewTaskService(tasksRepository)
 	tasksTransportHTTP := tasks_transport_http.NewTasksHTTPHandler(taskService)
 
+	logger.Debug("initiazling feature",zap.String("feature","statistics"))
+	statisticsRepository := postgres_statistics_repository.NewStatisticsRepository(pool)
+	statisticService := service_statistics.NewStatisticsService(statisticsRepository)
+	statisticTransportHTTP := statistics_tansport_http.NewStatisticsService(statisticService)
+ 
 	logger.Debug("initiazling HTTP Server")
 	
 	httpServer := core_http_server.NewHTTPServer(core_http_server.NewConfigMust(),logger, 
@@ -78,6 +85,7 @@ func main() {
   ) 	
 	
 	apiVersionRouter1 := core_http_server.NewApiVersionRouter(core_http_server.ApiVersion1)
+
 
   // Example of usage apiVersionRouter2 separate Middleware
 
@@ -90,6 +98,7 @@ func main() {
 
 	apiVersionRouter1.RegisterRoutes(usersTransportHTTP.Routes()...)
 	apiVersionRouter1.RegisterRoutes(tasksTransportHTTP.Routes()...)
+	apiVersionRouter1.RegisterRoutes(statisticTransportHTTP.Routes()...)
 
 	httpServer.RegisterAPIRouters(apiVersionRouter1)
 	

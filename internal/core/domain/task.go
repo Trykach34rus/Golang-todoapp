@@ -67,6 +67,21 @@ func NewTaskUninitialized(
 }
 
 
+func (t *Task)CompletionDuration() *time.Duration  {
+	if !t.Completed {
+		return nil
+	}
+
+	if t.CompletedAt == nil {
+		return nil
+	}
+	
+	duration := t.CompletedAt.Sub(t.CreatedAt)
+
+	return &duration
+}
+
+
 func (t *Task)Validate() error  {
 	titleLen := len([]rune(t.Title))
 
@@ -97,7 +112,7 @@ func (t *Task)Validate() error  {
 			)
 		}
 
-		if t.CompletedAt.Before(*t.CompletedAt) {
+		if t.CompletedAt.Before(t.CreatedAt) {
 			return fmt.Errorf(
 				"`CompletedAt` can't be before `CreatedAt`:%w",
 				core_errors.ErrInvalidArgument,
@@ -137,12 +152,12 @@ func (p *TaskPatch)Validate() error  {
 		)
 	}
 
-	if p.Completed.Set && p.Title.Value == nil {
-		return fmt.Errorf(
-			"`Description` can't be patched to NULL:%w",
-			core_errors.ErrInvalidArgument,
-		)
-	}
+  if p.Completed.Set && p.Completed.Value == nil {
+    return fmt.Errorf(
+        "`Completed` can't be patched to NULL: %w",
+        core_errors.ErrInvalidArgument,
+    )
+  }
 
 	return nil
 }
