@@ -26,7 +26,7 @@ func (r *TaskRepository) PatchTask(
 		description=$2,
 		completed=$3,
 		completed_at=$4,
-		version=version+1,
+		version=version+1
 	WHERE id=$5 AND version=$6
 	RETURNING
 	 id,
@@ -63,16 +63,12 @@ func (r *TaskRepository) PatchTask(
 		&taskModel.AuthorUserID,
 	)
 
-	if err != nil {
-		if errors.Is(err,core_postgres_pool.ErrNoRows){
-			return domain.Task{},fmt.Errorf(
-				"task with id='%d' concurrently accessed:%w",
-				id,
-				core_errors.ErrConflict,
-			)
-		}
-	}
-
+  if err != nil {
+    if errors.Is(err, core_postgres_pool.ErrNoRows) {
+        return domain.Task{}, fmt.Errorf("task with id='%d' concurrently accessed: %w", id, core_errors.ErrConflict)
+    }
+    return domain.Task{}, fmt.Errorf("update scan: %w", err)
+  }
 	taskDomain := taskDomainFromModel(taskModel)
 
 	return taskDomain,nil

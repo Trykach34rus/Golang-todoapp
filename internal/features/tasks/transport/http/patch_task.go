@@ -41,7 +41,7 @@ func (r *PatchTaskRequest)Validate()error  {
 	}
 
 	if r.Completed.Set {
-		if r.Description.Value == nil {
+		if r.Completed.Value == nil {
 			return fmt.Errorf("`Completed` can't be NULL")
 		}
 	}
