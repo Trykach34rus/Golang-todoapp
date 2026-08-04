@@ -187,10 +187,7 @@ func (x *UserResponse) GetPhoneNumber() string {
 
 type GetUserResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Version       int32                  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
-	FullName      string                 `protobuf:"bytes,3,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
-	PhoneNumber   *string                `protobuf:"bytes,4,opt,name=phone_number,json=phoneNumber,proto3,oneof" json:"phone_number,omitempty"`
+	User          *UserResponse          `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -225,32 +222,11 @@ func (*GetUserResponse) Descriptor() ([]byte, []int) {
 	return file_internal_features_users_proto_users_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetUserResponse) GetId() int32 {
+func (x *GetUserResponse) GetUser() *UserResponse {
 	if x != nil {
-		return x.Id
+		return x.User
 	}
-	return 0
-}
-
-func (x *GetUserResponse) GetVersion() int32 {
-	if x != nil {
-		return x.Version
-	}
-	return 0
-}
-
-func (x *GetUserResponse) GetFullName() string {
-	if x != nil {
-		return x.FullName
-	}
-	return ""
-}
-
-func (x *GetUserResponse) GetPhoneNumber() string {
-	if x != nil && x.PhoneNumber != nil {
-		return *x.PhoneNumber
-	}
-	return ""
+	return nil
 }
 
 type GetUsersResponse struct {
@@ -312,13 +288,9 @@ const file_internal_features_users_proto_users_proto_rawDesc = "" +
 	"\aversion\x18\x02 \x01(\x05R\aversion\x12\x1b\n" +
 	"\tfull_name\x18\x03 \x01(\tR\bfullName\x12&\n" +
 	"\fphone_number\x18\x04 \x01(\tH\x00R\vphoneNumber\x88\x01\x01B\x0f\n" +
-	"\r_phone_number\"\x91\x01\n" +
-	"\x0fGetUserResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\x05R\aversion\x12\x1b\n" +
-	"\tfull_name\x18\x03 \x01(\tR\bfullName\x12&\n" +
-	"\fphone_number\x18\x04 \x01(\tH\x00R\vphoneNumber\x88\x01\x01B\x0f\n" +
-	"\r_phone_number\"=\n" +
+	"\r_phone_number\":\n" +
+	"\x0fGetUserResponse\x12'\n" +
+	"\x04user\x18\x01 \x01(\v2\x13.users.UserResponseR\x04user\"=\n" +
 	"\x10GetUsersResponse\x12)\n" +
 	"\x05users\x18\x01 \x03(\v2\x13.users.UserResponseR\x05users2\x85\x01\n" +
 	"\fUsersService\x128\n" +
@@ -346,16 +318,17 @@ var file_internal_features_users_proto_users_proto_goTypes = []any{
 	(*GetUsersResponse)(nil), // 4: users.GetUsersResponse
 }
 var file_internal_features_users_proto_users_proto_depIdxs = []int32{
-	2, // 0: users.GetUsersResponse.users:type_name -> users.UserResponse
-	0, // 1: users.UsersService.GetUser:input_type -> users.GetUserRequest
-	1, // 2: users.UsersService.GetUsers:input_type -> users.GetUsersRequest
-	3, // 3: users.UsersService.GetUser:output_type -> users.GetUserResponse
-	4, // 4: users.UsersService.GetUsers:output_type -> users.GetUsersResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 0: users.GetUserResponse.user:type_name -> users.UserResponse
+	2, // 1: users.GetUsersResponse.users:type_name -> users.UserResponse
+	0, // 2: users.UsersService.GetUser:input_type -> users.GetUserRequest
+	1, // 3: users.UsersService.GetUsers:input_type -> users.GetUsersRequest
+	3, // 4: users.UsersService.GetUser:output_type -> users.GetUserResponse
+	4, // 5: users.UsersService.GetUsers:output_type -> users.GetUsersResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_internal_features_users_proto_users_proto_init() }
@@ -364,7 +337,6 @@ func file_internal_features_users_proto_users_proto_init() {
 		return
 	}
 	file_internal_features_users_proto_users_proto_msgTypes[2].OneofWrappers = []any{}
-	file_internal_features_users_proto_users_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -6,12 +6,10 @@ import (
 	pb "github.com/Trykach34rus/Golang-todoapp/internal/features/users/proto"
 )
 
-
 func (s *UsersGRPCServer) GetUser(
 	ctx context.Context,
 	req *pb.GetUserRequest,
 ) (*pb.GetUserResponse, error) {
-
 
 	user, err := s.usersService.GetUser(
 		ctx,
@@ -22,6 +20,7 @@ func (s *UsersGRPCServer) GetUser(
 		return nil, err
 	}
 
-
-	return userProtoFromDomain(user), nil
+	return &pb.GetUserResponse{
+		User: userProtoFromDomain(user),
+	}, nil
 }

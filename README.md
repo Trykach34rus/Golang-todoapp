@@ -1,4 +1,5 @@
 # Golang-todoapp
+
 # 🚀 TodoApp Backend
 
 REST + gRPC backend приложение для управления пользователями и задачами, разработанное на **Go** с использованием принципов **Clean Architecture**.
@@ -10,7 +11,7 @@ REST + gRPC backend приложение для управления польз�
 ## 🛠 Tech Stack
 
 <p align="left">
-  <img src="https://img.shields.io/badge/Go-1.25-00ADD8?style=for-the-badge&logo=go">
+  <img src="https://img.shields.io/badge/Go-1.25.4-00ADD8?style=for-the-badge&logo=go">
   <img src="https://img.shields.io/badge/PostgreSQL-18-4169E1?style=for-the-badge&logo=postgresql">
   <img src="https://img.shields.io/badge/gRPC-Protocol%20Buffers-244C5A?style=for-the-badge&logo=grpc">
   <img src="https://img.shields.io/badge/REST-API-009688?style=for-the-badge">
@@ -22,19 +23,19 @@ REST + gRPC backend приложение для управления польз�
 
 # ✨ Features
 
-* ✅ User CRUD
-* ✅ Task CRUD
-* ✅ REST API
-* ✅ gRPC API
-* ✅ PostgreSQL
-* ✅ Docker Compose
-* ✅ Graceful Shutdown
-* ✅ Context propagation
-* ✅ Structured logging (Zap)
-* ✅ Clean Architecture
-* ✅ Repository Pattern
-* ✅ Service Layer
-* ✅ Dependency Injection
+- ✅ User CRUD
+- ✅ Task CRUD
+- ✅ REST API
+- ✅ gRPC API
+- ✅ PostgreSQL
+- ✅ Docker Compose
+- ✅ Graceful Shutdown
+- ✅ Context propagation
+- ✅ Structured logging (Zap)
+- ✅ Clean Architecture
+- ✅ Repository Pattern
+- ✅ Service Layer
+- ✅ Dependency Injection
 
 ---
 
@@ -58,10 +59,10 @@ REST + gRPC backend приложение для управления польз�
 
 The project separates business logic from transport and infrastructure.
 
-* **Transport** — HTTP & gRPC handlers.
-* **Service** — business logic.
-* **Repository** — database interaction.
-* **Core** — shared components (logger, domain models, errors, middleware, server).
+- **Transport** — HTTP & gRPC handlers.
+- **Service** — business logic.
+- **Repository** — database interaction.
+- **Core** — shared components (logger, domain models, errors, middleware, server).
 
 ---
 
@@ -89,10 +90,17 @@ internal/
     │       └── grpc/
     │
     └── tasks/
+    │   ├── repository/
+    │   ├── service/
+    │   └── transport/
+    │       └── http/
+    │
+    └── stasistics/
         ├── repository/
         ├── service/
         └── transport/
-            └── http/
+        └── http/
+
 ```
 
 ---
@@ -146,10 +154,10 @@ Database: **PostgreSQL**
 
 The application uses:
 
-* pgx
-* SQL migrations
-* connection pool
-* repository pattern
+- pgx
+- SQL migrations
+- connection pool
+- repository pattern
 
 ---
 
@@ -198,16 +206,16 @@ DATABASE_PORT=5433
 
 Planned improvements:
 
-* JWT Authentication
-* Auth Service
-* Redis
-* Kafka
-* Unit Tests
-* Integration Tests
-* CI/CD
-* Prometheus
-* Grafana
-* OpenTelemetry
+- JWT Authentication
+- Auth Service
+- Redis
+- Kafka
+- Unit Tests
+- Integration Tests
+- CI/CD
+- Prometheus
+- Grafana
+- OpenTelemetry
 
 ---
 
