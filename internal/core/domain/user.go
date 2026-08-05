@@ -19,6 +19,8 @@ type UserPatch struct {
 	PhoneNumber Nullable[string]
 }
 
+var re = regexp.MustCompile(`^\+[0-9]+$`)
+
 func NewUserPatch(
 	fullName Nullable[string],
 	phoneNumber Nullable[string],
@@ -52,25 +54,34 @@ func (u *User) Validate() error {
 	fullNameLen := len([]rune(u.FullName))
 
 	if fullNameLen < 3 || fullNameLen > 100 {
-		return fmt.Errorf("invalid `FullName` len: %d: %w",fullNameLen,core_errors.ErrInvalidArgument)
+		return fmt.Errorf(
+			"invalid `FullName` len: %d: %w",
+			fullNameLen,
+			core_errors.ErrInvalidArgument,
+		)
 	}
 
 	if u.PhoneNumber != nil {
 		phoneNumberLen := len([]rune(*u.PhoneNumber))
-		if phoneNumberLen<10 || phoneNumberLen>15 {
-			return fmt.Errorf("invalid `PhoneNumber` len: %d: %w",phoneNumberLen,core_errors.ErrInvalidArgument)
-		}
-	}
-	
-	re := regexp.MustCompile(`^\+[0-9]+$`)
 
-	if !re.MatchString(*u.PhoneNumber){
-		return fmt.Errorf("invalid `PhoneNumber` format: %w",core_errors.ErrInvalidArgument)
+		if phoneNumberLen < 10 || phoneNumberLen > 15 {
+			return fmt.Errorf(
+				"invalid `PhoneNumber` len: %d: %w",
+				phoneNumberLen,
+				core_errors.ErrInvalidArgument,
+			)
+		}
+
+		if !re.MatchString(*u.PhoneNumber) {
+			return fmt.Errorf(
+				"invalid `PhoneNumber` format: %w",
+				core_errors.ErrInvalidArgument,
+			)
+		}
 	}
 
 	return nil
 }
-
 
 func (p *UserPatch)ValidatePatch() error  {
 
