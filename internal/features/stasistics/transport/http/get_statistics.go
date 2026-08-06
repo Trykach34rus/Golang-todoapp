@@ -11,13 +11,26 @@ import (
 	core_http_response "github.com/Trykach34rus/Golang-todoapp/internal/core/transport/http/response"
 )
 
+
 type GetStatisticsResponse struct {
-	TasksCreated              int `json:"tasks_created"`
-	TasksCompleted            int `json:"tasks_completed"`
-	TasksCompletedRate        *float64 `json:"tasks_completed_rate"`
-	TaskAverageCompletionTime *string `json:"tasks_avarage_completion_time"`
+	TasksCreated              int `json:"tasks_created" example:"10"`
+	TasksCompleted            int `json:"tasks_completed" example:"30"`
+	TasksCompletedRate        *float64 `json:"tasks_completed_rate" example:"20"`
+	TaskAverageCompletionTime *string `json:"tasks_avarage_completion_time" example:"1m30s"`
 }
 
+// GetStatistics godoc
+// @Summary      Получить статистики
+// @Description  Просмотр статистики по задачам с опициональной фильтрацией по user_id, и.или временному промежутку
+// @Tags        statistics
+// @Produce     json
+// @Param       user_id query int false "Фильтрация статистики по ID автора"
+// @Param       from query int false "Начало промежуточного рассмотрения статитстики (включительно), "Начало периода (YYYY-MM-DD)"
+// @Param       to query int false "Конец промежутка рассмотрения  (не включительно), "Конец периода (YYYY-MM-DD)"
+// @Success     200 {object} GetStatisticsResponse "успешное получение статистики"
+// @Failure     400 {object} core_http_response.ErrorResponse "BadRequest"
+// @Failure     500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router      /statistics [get]
 func (h *StatisticsHTTPHAndler) GetStatistics(rw http.ResponseWriter,r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
