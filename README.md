@@ -166,7 +166,7 @@ The application uses:
 Clone the repository
 
 ```bash
-git clone <repository_url>
+git clone <https://github.com/Trykach34rus/Golang-todoapp.git>
 ```
 
 Go to the project
