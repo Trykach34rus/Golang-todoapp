@@ -23,9 +23,15 @@ import (
 	users_service "github.com/Trykach34rus/Golang-todoapp/internal/features/users/service"
 	users_transport_http "github.com/Trykach34rus/Golang-todoapp/internal/features/users/transport/http"
 	"go.uber.org/zap"
+
+	_ "github.com/Trykach34rus/Golang-todoapp/docs"
 )
 
-
+// @title       Golang Todo API
+// @version     1.0
+// @description Todo Application REST-API/gRPC schema
+// @host        127.0.0.1:5050
+// @BasePath    /api/v1
 func main() {
 	cfg := core_config.NewConfigMust()
 
@@ -77,7 +83,8 @@ func main() {
  
 	logger.Debug("initiazling HTTP Server")
 	
-	httpServer := core_http_server.NewHTTPServer(core_http_server.NewConfigMust(),logger, 
+	httpServer := core_http_server.NewHTTPServer(core_http_server.NewConfigMust(),logger,
+	core_http_middleware.CORS(), 
 	core_http_middleware.RequestID(),
   core_http_middleware.Logger(logger),
 	core_http_middleware.Trace(),
@@ -101,6 +108,7 @@ func main() {
 	apiVersionRouter1.RegisterRoutes(statisticTransportHTTP.Routes()...)
 
 	httpServer.RegisterAPIRouters(apiVersionRouter1)
+	httpServer.RegisterSwagger()
 	
 	if err := httpServer.Run(ctx );err != nil {
 		logger.Error("HTTP Server run error",zap.Error(err))

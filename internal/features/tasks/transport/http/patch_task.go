@@ -12,13 +12,32 @@ import (
 )
 
 type PatchTaskRequest struct {
-	Title core_http_types.Nullable[string] `json:"title"`
-	Description core_http_types.Nullable[string] `json:"description"`
-	Completed core_http_types.Nullable[bool] `json:"completed"`
+	Title core_http_types.Nullable[string] `json:"title" swaggertype:"string" example:"Сходить в зал"`
+	Description core_http_types.Nullable[string] `json:"description" swaggertype:"string" example:"Очень подробное описание что нужно по тренировать"`
+	Completed core_http_types.Nullable[bool] `json:"completed" swaggertype:"string" example:"true"`
 } 
 
 type PatchTaskResponse TaskDTOResponse
 
+// PatchTask    godoc
+// @Summary     Изменение задачи
+// @Description Изменение информации об уже существующей задачи
+// @Description ### Логика обновления полей (Three-state logic):
+// @Description 1.**Поле не передано**: `description` игнорируется, значение в БД не меняется 
+// @Description 2.**Явно передано значение**: `"description":"После работы в 19:00 надо потренить бицуху"` - устанавливает описание в бд
+// @Description 3.**Передан null**: `"description": null` - очищает поле в БД (set to NULL)
+// @Description Ограничения: `title` и `completed` не может быть выставлен как NULL	
+// @Tags        tasks
+// @Accept      json
+// @Produce     json
+// @Param       id path int true "ID изменяемой задачи"
+// @Param       request body PatchTaskRequest true "PatchTask тело запроса"
+// @Success     200 {object} PatchTaskResponse"успешное изменение задачи"
+// @Failure     400 {object} core_http_response.ErrorResponse "BadRequest"
+// @Failure     404 {object} core_http_response.ErrorResponse "Author not found"
+// @Failure     409 {object} core_http_response.ErrorResponse "Conflict"
+// @Failure     500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router      /tasks/{id} [patch]
 func (r *PatchTaskRequest)Validate()error  {
 	if r.Title.Set {
 		if r.Title.Value == nil {
