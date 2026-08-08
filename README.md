@@ -139,7 +139,7 @@ The REST API is documented using **Swagger / OpenAPI**.
 
 You can open the interactive Swagger UI here:
 
-[Swagger UI — TodoApp API](http://84.38.180.116:5050/swagger/index.html?utm_source=chatgpt.com#/tasks/get_tasks)
+[Swagger UI — TodoApp API](http://84.38.180.116:5050/swagger/index.html#/)
 
 Swagger UI allows you to:
 
