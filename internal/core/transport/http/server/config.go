@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Addr           string `envcofing:"ADDR" required:"true"`
 	ShutdownTimeout time.Duration `envcofing:"SHUTDOWN_TIMEOUT" default:"30s"`
+	AllowedOrigins [] string `envconfig:"ALLOWED_ORIGINS" required:"true"`
 }
 
 
