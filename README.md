@@ -8,34 +8,37 @@ REST + gRPC backend приложение для управления польз�
 
 ---
 
-## 🛠 Tech Stack
+# 🛠 Tech Stack
 
-<p align="left">
-  <img src="https://img.shields.io/badge/Go-1.25.4-00ADD8?style=for-the-badge&logo=go">
-  <img src="https://img.shields.io/badge/PostgreSQL-18-4169E1?style=for-the-badge&logo=postgresql">
-  <img src="https://img.shields.io/badge/gRPC-Protocol%20Buffers-244C5A?style=for-the-badge&logo=grpc">
-  <img src="https://img.shields.io/badge/REST-API-009688?style=for-the-badge">
-  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker">
-  <img src="https://img.shields.io/badge/Zap-Logger-000000?style=for-the-badge">
-</p>
+* **Go**
+* **PostgreSQL**
+* **pgx / pgxpool**
+* **REST API**
+* **gRPC**
+* **Protocol Buffers**
+* **Docker / Docker Compose**
+* **Zap**
+* **Swagger / OpenAPI**
+* **Clean Architecture**
 
 ---
 
 # ✨ Features
 
-- ✅ User CRUD
-- ✅ Task CRUD
-- ✅ REST API
-- ✅ gRPC API
-- ✅ PostgreSQL
-- ✅ Docker Compose
-- ✅ Graceful Shutdown
-- ✅ Context propagation
-- ✅ Structured logging (Zap)
-- ✅ Clean Architecture
-- ✅ Repository Pattern
-- ✅ Service Layer
-- ✅ Dependency Injection
+* ✅ User CRUD
+* ✅ Task CRUD
+* ✅ REST API
+* ✅ gRPC API
+* ✅ PostgreSQL
+* ✅ Docker Compose
+* ✅ Graceful Shutdown
+* ✅ Context propagation
+* ✅ Structured logging (Zap)
+* ✅ Clean Architecture
+* ✅ Repository Pattern
+* ✅ Service Layer
+* ✅ Dependency Injection
+* ✅ Swagger / OpenAPI documentation
 
 ---
 
@@ -59,10 +62,10 @@ REST + gRPC backend приложение для управления польз�
 
 The project separates business logic from transport and infrastructure.
 
-- **Transport** — HTTP & gRPC handlers.
-- **Service** — business logic.
-- **Repository** — database interaction.
-- **Core** — shared components (logger, domain models, errors, middleware, server).
+* **Transport** — HTTP & gRPC handlers.
+* **Service** — business logic.
+* **Repository** — database interaction.
+* **Core** — shared components (logger, domain models, errors, middleware, server).
 
 ---
 
@@ -89,18 +92,17 @@ internal/
     │       ├── http/
     │       └── grpc/
     │
-    └── tasks/
+    ├── tasks/
     │   ├── repository/
     │   ├── service/
     │   └── transport/
     │       └── http/
     │
-    └── stasistics/
+    └── statistics/
         ├── repository/
         ├── service/
         └── transport/
-        └── http/
-
+            └── http/
 ```
 
 ---
@@ -131,6 +133,24 @@ DELETE  /api/v1/tasks/{id}
 
 ---
 
+# 📚 Swagger API Documentation
+
+The REST API is documented using **Swagger / OpenAPI**.
+
+You can open the interactive Swagger UI here:
+
+[Swagger UI — TodoApp API](http://84.38.180.116:5050/swagger/index.html?utm_source=chatgpt.com#/tasks/get_tasks)
+
+Swagger UI allows you to:
+
+* view all available REST endpoints;
+* inspect request and response models;
+* see HTTP methods and parameters;
+* send test requests directly to the running API;
+* inspect API responses.
+
+---
+
 # ⚡ gRPC API
 
 The project also exposes gRPC endpoints using Protocol Buffers.
@@ -154,22 +174,22 @@ Database: **PostgreSQL**
 
 The application uses:
 
-- pgx
-- SQL migrations
-- connection pool
-- repository pattern
+* pgx
+* SQL migrations
+* connection pool
+* repository pattern
 
 ---
 
 # 🚀 Running the Project
 
-Clone the repository
+Clone the repository:
 
 ```bash
-git clone <https://github.com/Trykach34rus/Golang-todoapp.git>
+git clone https://github.com/Trykach34rus/Golang-todoapp.git
 ```
 
-Go to the project
+Go to the project:
 
 ```bash
 cd Golang-todoapp
@@ -177,7 +197,7 @@ cd Golang-todoapp
 
 Create an `.env` file.
 
-Run Docker Compose
+Run Docker Compose:
 
 ```bash
 docker compose up --build
@@ -199,23 +219,6 @@ POSTGRES_DB=todoapp
 DATABASE_HOST=localhost
 DATABASE_PORT=5433
 ```
-
----
-
-# 📌 Roadmap
-
-Planned improvements:
-
-- JWT Authentication
-- Auth Service
-- Redis
-- Kafka
-- Unit Tests
-- Integration Tests
-- CI/CD
-- Prometheus
-- Grafana
-- OpenTelemetry
 
 ---
 
