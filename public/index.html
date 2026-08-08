@@ -1,0 +1,1212 @@
+<!doctype html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>VAULT-TEC PERSONAL DATA MANAGER v1.0</title>
+		<link
+			href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			:root {
+				--pip-green: #14fe17;
+				--pip-dark: #0a150a;
+				--pip-dim: #0f2f0f;
+				--pip-glow: 0 0 2px #14fe17, 0 0 6px #14fe1788;
+				--pip-text: #4aff4a;
+				--pip-amber: #ffbf00;
+				--pip-red: #ff3333;
+				--font-main: 'VT323', 'Courier New', Courier, monospace;
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				width: 100%;
+				height: 100%;
+				background: #050805;
+				color: var(--pip-text);
+				font-family: var(--font-main);
+				font-size: 20px;
+				overflow: hidden;
+			}
+
+			/* CRT Overlay */
+			.crt-overlay {
+				position: fixed;
+				inset: 0;
+				pointer-events: none;
+				z-index: 9999;
+				background:
+					repeating-linear-gradient(
+						0deg,
+						rgba(0, 0, 0, 0.15) 0px,
+						rgba(0, 0, 0, 0.15) 1px,
+						transparent 1px,
+						transparent 2px
+					),
+					linear-gradient(
+						90deg,
+						rgba(255, 0, 0, 0.04),
+						rgba(0, 255, 0, 0.02),
+						rgba(0, 0, 255, 0.04)
+					);
+				box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.8);
+				animation: crtFlicker 0.12s infinite;
+			}
+
+			@keyframes crtFlicker {
+				0% {
+					opacity: 0.97;
+				}
+				5% {
+					opacity: 0.92;
+				}
+				10% {
+					opacity: 0.95;
+				}
+				15% {
+					opacity: 0.99;
+				}
+				20% {
+					opacity: 0.96;
+				}
+				100% {
+					opacity: 0.97;
+				}
+			}
+
+			.glow {
+				text-shadow: var(--pip-glow);
+			}
+			.glow-strong {
+				text-shadow:
+					0 0 4px currentColor,
+					0 0 12px currentColor;
+			}
+
+			/* Boot Screen */
+			#boot-screen {
+				position: fixed;
+				inset: 0;
+				background: var(--pip-dark);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 5000;
+				flex-direction: column;
+				padding: 2rem;
+			}
+
+			.boot-term {
+				max-width: 700px;
+				width: 100%;
+				white-space: pre-wrap;
+				line-height: 1.4;
+				font-size: 22px;
+			}
+
+			.boot-line {
+				display: block;
+			}
+
+			.cursor-blink::after {
+				content: '█';
+				animation: blink 1s step-end infinite;
+				color: var(--pip-green);
+			}
+			@keyframes blink {
+				50% {
+					opacity: 0;
+				}
+			}
+
+			/* App Layout */
+			#app {
+				display: flex;
+				flex-direction: column;
+				height: 100vh;
+				width: 100vw;
+				padding: 12px;
+				gap: 10px;
+			}
+
+			header {
+				border: 2px solid var(--pip-green);
+				padding: 8px 16px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				box-shadow: var(--pip-glow);
+				background: linear-gradient(
+					90deg,
+					rgba(20, 254, 23, 0.05),
+					transparent
+				);
+			}
+
+			h1 {
+				font-size: 28px;
+				letter-spacing: 2px;
+			}
+			.clock {
+				font-size: 24px;
+				opacity: 0.85;
+			}
+
+			/* Nav Tabs */
+			nav {
+				display: flex;
+				gap: 12px;
+				border-bottom: 2px solid var(--pip-green);
+				padding-bottom: 4px;
+			}
+
+			.tab-btn {
+				background: transparent;
+				border: 2px solid var(--pip-green);
+				color: var(--pip-green);
+				font-family: var(--font-main);
+				font-size: 22px;
+				padding: 4px 18px;
+				cursor: pointer;
+				text-transform: uppercase;
+				letter-spacing: 1px;
+			}
+			.tab-btn:hover,
+			.tab-btn.active {
+				background: rgba(20, 254, 23, 0.15);
+				box-shadow: var(--pip-glow);
+			}
+			.tab-btn.active::before {
+				content: '> ';
+			}
+			.tab-btn.active::after {
+				content: ' <';
+			}
+
+			/* Main content */
+			main {
+				flex: 1;
+				overflow-y: auto;
+				overflow-x: hidden;
+				border: 2px solid var(--pip-green);
+				padding: 16px;
+				box-shadow: inset 0 0 30px rgba(20, 254, 23, 0.05);
+				position: relative;
+			}
+
+			.panel {
+				display: none;
+			}
+			.panel.active {
+				display: block;
+				animation: fadeIn 0.2s ease-in;
+			}
+
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+				}
+				to {
+					opacity: 1;
+				}
+			}
+
+			h2.section-title {
+				font-size: 26px;
+				margin-bottom: 12px;
+				border-bottom: 2px dashed rgba(20, 254, 23, 0.3);
+				padding-bottom: 4px;
+				text-transform: uppercase;
+				letter-spacing: 2px;
+			}
+
+			/* Form Box */
+			.form-box {
+				border: 2px solid var(--pip-green);
+				padding: 14px;
+				margin-bottom: 20px;
+				background: rgba(0, 20, 0, 0.3);
+				box-shadow: var(--pip-glow);
+			}
+
+			.form-row {
+				display: grid;
+				grid-template-columns: 140px 1fr;
+				gap: 10px;
+				align-items: center;
+				margin-bottom: 10px;
+			}
+			label {
+				text-transform: uppercase;
+				font-size: 20px;
+				opacity: 0.9;
+			}
+			input,
+			select,
+			textarea {
+				background: rgba(0, 10, 0, 0.8);
+				color: var(--pip-green);
+				border: 1px solid var(--pip-green);
+				font-family: var(--font-main);
+				font-size: 20px;
+				padding: 6px 8px;
+				outline: none;
+				width: 100%;
+			}
+			input:focus,
+			select:focus,
+			textarea:focus {
+				box-shadow: var(--pip-glow);
+			}
+			textarea {
+				min-height: 60px;
+				resize: vertical;
+			}
+
+			.form-actions {
+				display: flex;
+				gap: 10px;
+				align-items: center;
+				margin-top: 12px;
+			}
+
+			/* Buttons */
+			.btn {
+				font-family: var(--font-main);
+				font-size: 22px;
+				cursor: pointer;
+				border: 2px solid var(--pip-green);
+				background: rgba(0, 20, 0, 0.6);
+				color: var(--pip-green);
+				padding: 6px 16px;
+				text-transform: uppercase;
+				letter-spacing: 1px;
+			}
+			.btn:hover {
+				background: rgba(20, 254, 23, 0.2);
+				box-shadow: var(--pip-glow);
+			}
+			.btn:active {
+				transform: translateY(1px);
+			}
+			.btn-danger {
+				border-color: var(--pip-red);
+				color: var(--pip-red);
+				background: rgba(255, 51, 51, 0.08);
+			}
+			.btn-danger:hover {
+				box-shadow:
+					0 0 4px #ff3333,
+					0 0 8px #ff333388;
+				background: rgba(255, 51, 51, 0.2);
+			}
+			.btn-amber {
+				border-color: var(--pip-amber);
+				color: var(--pip-amber);
+				background: rgba(255, 191, 0, 0.08);
+			}
+
+			/* Table */
+			.data-table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 20px;
+			}
+			.data-table th,
+			.data-table td {
+				border: 1px solid rgba(20, 254, 23, 0.25);
+				padding: 6px 10px;
+				text-align: left;
+				vertical-align: middle;
+			}
+			.data-table th {
+				background: rgba(20, 254, 23, 0.08);
+				text-transform: uppercase;
+				letter-spacing: 1px;
+				font-weight: normal;
+				border-bottom: 2px solid var(--pip-green);
+			}
+			.data-table tr:hover {
+				background: rgba(20, 254, 23, 0.06);
+			}
+
+			.status-badge {
+				display: inline-block;
+				padding: 1px 8px;
+				border: 1px solid currentColor;
+				font-size: 18px;
+				text-transform: uppercase;
+			}
+
+			/* Priority colors */
+			.p-CRITICAL {
+				color: var(--pip-red);
+				text-shadow: 0 0 4px var(--pip-red);
+				border-color: var(--pip-red);
+			}
+			.p-HIGH {
+				color: var(--pip-amber);
+				border-color: var(--pip-amber);
+			}
+			.p-MEDIUM {
+				color: var(--pip-green);
+				border-color: var(--pip-green);
+			}
+			.p-LOW {
+				color: #557955;
+				border-color: #557955;
+			}
+
+			.actions-cell {
+				white-space: nowrap;
+				display: flex;
+				gap: 6px;
+			}
+			.actions-cell .btn {
+				font-size: 18px;
+				padding: 2px 10px;
+			}
+
+			/* Footer / Status Bar */
+			#status-bar {
+				border: 2px solid var(--pip-green);
+				padding: 6px 14px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				font-size: 20px;
+				background: rgba(20, 254, 23, 0.04);
+				box-shadow: var(--pip-glow);
+			}
+
+			/* Scrollbar */
+			::-webkit-scrollbar {
+				width: 10px;
+			}
+			::-webkit-scrollbar-track {
+				background: var(--pip-dark);
+				border: 1px solid rgba(20, 254, 23, 0.2);
+			}
+			::-webkit-scrollbar-thumb {
+				background: rgba(20, 254, 23, 0.25);
+				border: 1px solid var(--pip-green);
+			}
+			::-webkit-scrollbar-thumb:hover {
+				background: rgba(20, 254, 23, 0.45);
+			}
+
+			/* hide number arrows */
+			input::-webkit-outer-spin-button,
+			input::-webkit-inner-spin-button {
+				-webkit-appearance: none;
+				margin: 0;
+			}
+
+			.alert-msg {
+				color: var(--pip-red);
+				text-shadow: 0 0 4px var(--pip-red);
+				font-size: 22px;
+				margin-bottom: 10px;
+				display: none;
+			}
+			.alert-msg.show {
+				display: block;
+			}
+
+			@media (max-width: 768px) {
+				.form-row {
+					grid-template-columns: 1fr;
+				}
+				h1 {
+					font-size: 20px;
+				}
+				.clock {
+					font-size: 18px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="crt-overlay"></div>
+
+		<!-- Boot Screen -->
+		<div id="boot-screen">
+			<div class="boot-term glow" id="boot-text"></div>
+		</div>
+
+		<!-- Application -->
+		<div id="app">
+			<header>
+				<h1 class="glow">VAULT-TEC PERSONAL DATA MANAGER v1.0</h1>
+				<div class="clock glow" id="clock">00:00:00</div>
+			</header>
+
+			<nav>
+				<button class="tab-btn active" onclick="switchTab('users')">
+					USERS
+				</button>
+				<button class="tab-btn" onclick="switchTab('tasks')">TASKS</button>
+				<button
+					class="tab-btn btn-amber"
+					onclick="toggleApiMode()"
+					id="api-toggle-btn"
+				>
+					MOCK: ON
+				</button>
+			</nav>
+
+			<main>
+				<!-- USERS PANEL -->
+				<section id="panel-users" class="panel active">
+					<h2 class="section-title glow">>> USER MANAGEMENT</h2>
+
+					<div class="alert-msg" id="users-alert"></div>
+
+					<div class="form-box">
+						<div
+							style="
+								margin-bottom: 10px;
+								text-transform: uppercase;
+								opacity: 0.85;
+								font-size: 22px;
+							"
+							id="users-form-title"
+						>
+							> ADD NEW USER
+						</div>
+						<form id="users-form" onsubmit="return saveUser(event)">
+							<input type="hidden" id="user-edit-id" />
+
+							<div class="form-row">
+								<label> FULL NAME </label>
+
+								<input
+									type="text"
+									id="user-full-name"
+									required
+									maxlength="100"
+									placeholder="John Smith"
+								/>
+							</div>
+
+							<div class="form-row">
+								<label> PHONE </label>
+
+								<input
+									type="text"
+									id="user-phone"
+									maxlength="20"
+									placeholder="+79991234567"
+								/>
+							</div>
+
+							<div class="form-actions">
+								<button type="submit" class="btn glow" id="user-submit-btn">
+									EXECUTE
+								</button>
+
+								<button type="button" class="btn" onclick="resetUserForm()">
+									CLEAR
+								</button>
+							</div>
+						</form>
+					</div>
+
+					<table class="data-table">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>USERNAME</th>
+								<th>EMAIL</th>
+								<th>STATUS</th>
+								<th style="width: 180px">ACTIONS</th>
+							</tr>
+						</thead>
+						<tbody id="users-table-body">
+							<!-- rows -->
+						</tbody>
+					</table>
+					<div
+						id="users-empty"
+						style="margin-top: 10px; opacity: 0.7; display: none"
+					>
+						NO DATA FOUND.
+					</div>
+				</section>
+
+				<!-- TASKS PANEL -->
+				<section id="panel-tasks" class="panel">
+					<h2 class="section-title glow">>> TASK MANAGEMENT</h2>
+
+					<div class="alert-msg" id="tasks-alert"></div>
+
+					<div class="form-box">
+						<div
+							style="
+								margin-bottom: 10px;
+								text-transform: uppercase;
+								opacity: 0.85;
+								font-size: 22px;
+							"
+							id="tasks-form-title"
+						>
+							> ADD NEW TASK
+						</div>
+						<form id="tasks-form" onsubmit="return saveTask(event)">
+							<input type="hidden" id="task-edit-id" />
+							<div class="form-row">
+								<label>Title</label>
+								<input
+									type="text"
+									id="task-title"
+									required
+									maxlength="100"
+									placeholder="e.g. Find the Water Chip"
+								/>
+							</div>
+							<div class="form-row">
+								<label>Description</label>
+								<textarea
+									id="task-desc"
+									rows="3"
+									placeholder="Mission details..."
+								></textarea>
+							</div>
+							<div class="form-row">
+								<label>Priority</label>
+								<select id="task-priority">
+									<option value="CRITICAL">CRITICAL</option>
+									<option value="HIGH">HIGH</option>
+									<option value="MEDIUM" selected>MEDIUM</option>
+									<option value="LOW">LOW</option>
+								</select>
+							</div>
+							<div class="form-row">
+								<label>Status</label>
+								<select id="task-status">
+									<option value="PENDING">PENDING</option>
+									<option value="IN_PROGRESS">IN_PROGRESS</option>
+									<option value="COMPLETED">COMPLETED</option>
+								</select>
+							</div>
+							<div class="form-row">
+								<label>Assigned To</label>
+								<select id="task-userId">
+									<option value="">-- UNASSIGNED --</option>
+								</select>
+							</div>
+							<div class="form-actions">
+								<button type="submit" class="btn glow" id="task-submit-btn">
+									EXECUTE
+								</button>
+								<button type="button" class="btn" onclick="resetTaskForm()">
+									CLEAR
+								</button>
+							</div>
+						</form>
+					</div>
+
+					<table class="data-table">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>TITLE</th>
+								<th>STATUS</th>
+								<th>PRIORITY</th>
+								<th>ASSIGNED</th>
+								<th style="width: 180px">ACTIONS</th>
+							</tr>
+						</thead>
+						<tbody id="tasks-table-body">
+							<!-- rows -->
+						</tbody>
+					</table>
+					<div
+						id="tasks-empty"
+						style="margin-top: 10px; opacity: 0.7; display: none"
+					>
+						NO DATA FOUND.
+					</div>
+				</section>
+			</main>
+
+			<footer id="status-bar">
+				<div id="status-left">> SYSTEM ONLINE | MEMORY 640K OK</div>
+				<div id="status-right" class="glow">API: MOCK STORAGE</div>
+			</footer>
+		</div>
+
+		<script>
+			const API_BASE = 'http://localhost:5050/api/v1'
+
+			// ============================================================
+			// REAL API CLIENT
+			// ============================================================
+
+			class ApiClient {
+				constructor(base = API_BASE) {
+					this.base = base
+				}
+
+				async request(path, options = {}) {
+					const response = await fetch(`${this.base}${path}`, {
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						...options,
+					})
+
+					let body = null
+
+					if (response.status !== 204) {
+						body = await response.json().catch(() => null)
+					}
+
+					if (!response.ok) {
+						const message =
+							body?.message || body?.error || `HTTP ${response.status}`
+
+						throw new Error(message)
+					}
+
+					return body
+				}
+
+				// ========================================================
+				// USERS
+				// ========================================================
+
+				getUsers() {
+					return this.request('/users')
+				}
+
+				getUser(id) {
+					return this.request(`/users/${id}`)
+				}
+
+				createUser(data) {
+					return this.request('/users', {
+						method: 'POST',
+						body: JSON.stringify(data),
+					})
+				}
+
+				updateUser(id, data) {
+					return this.request(`/users/${id}`, {
+						method: 'PATCH',
+						body: JSON.stringify(data),
+					})
+				}
+
+				deleteUser(id) {
+					return this.request(`/users/${id}`, {
+						method: 'DELETE',
+					})
+				}
+
+				// ========================================================
+				// TASKS
+				// ========================================================
+
+				getTasks() {
+					return this.request('/tasks')
+				}
+
+				getTask(id) {
+					return this.request(`/tasks/${id}`)
+				}
+
+				createTask(data) {
+					return this.request('/tasks', {
+						method: 'POST',
+						body: JSON.stringify(data),
+					})
+				}
+
+				updateTask(id, data) {
+					return this.request(`/tasks/${id}`, {
+						method: 'PATCH',
+						body: JSON.stringify(data),
+					})
+				}
+
+				deleteTask(id) {
+					return this.request(`/tasks/${id}`, {
+						method: 'DELETE',
+					})
+				}
+			}
+
+			// ============================================================
+			// APP STATE
+			// ============================================================
+
+			const api = new ApiClient()
+
+			let currentTab = 'users'
+
+			// ============================================================
+			// STATUS / ALERTS
+			// ============================================================
+
+			function setStatus(text, type = 'normal') {
+				const right = document.getElementById('status-right')
+
+				right.textContent = text
+
+				right.style.color =
+					type === 'error'
+						? 'var(--pip-red)'
+						: type === 'warn'
+							? 'var(--pip-amber)'
+							: 'var(--pip-green)'
+			}
+
+			function showAlert(panel, msg) {
+				const element = document.getElementById(`${panel}-alert`)
+
+				element.textContent = `> ${msg}`
+
+				element.classList.add('show')
+
+				setTimeout(() => {
+					element.classList.remove('show')
+				}, 4000)
+			}
+
+			// ============================================================
+			// CLOCK
+			// ============================================================
+
+			function updateClock() {
+				const now = new Date()
+
+				const h = String(now.getHours()).padStart(2, '0')
+
+				const m = String(now.getMinutes()).padStart(2, '0')
+
+				const s = String(now.getSeconds()).padStart(2, '0')
+
+				document.getElementById('clock').textContent = `${h}:${m}:${s}`
+			}
+
+			setInterval(updateClock, 1000)
+
+			updateClock()
+
+			// ============================================================
+			// TABS
+			// ============================================================
+
+			function switchTab(name) {
+				currentTab = name
+
+				document
+					.querySelectorAll('.tab-btn')
+					.forEach(btn => btn.classList.remove('active'))
+
+				document
+					.querySelectorAll('.panel')
+					.forEach(panel => panel.classList.remove('active'))
+
+				const index = name === 'users' ? 1 : 2
+
+				const button = document.querySelector(`.tab-btn:nth-child(${index})`)
+
+				if (button) {
+					button.classList.add('active')
+				}
+
+				document.getElementById(`panel-${name}`).classList.add('active')
+
+				if (name === 'users') {
+					renderUsers()
+				}
+
+				if (name === 'tasks') {
+					refreshUserSelect()
+					renderTasks()
+				}
+
+				setStatus(`VIEWING ${name.toUpperCase()} DATABASE`)
+			}
+			//
+			// ============================================================
+			// USERS CRUD
+			// ============================================================
+
+			async function renderUsers() {
+				setStatus('FETCHING USER RECORDS...')
+
+				try {
+					const users = await api.getUsers()
+
+					const tbody = document.getElementById('users-table-body')
+
+					const empty = document.getElementById('users-empty')
+
+					tbody.innerHTML = ''
+
+					if (!users || users.length === 0) {
+						empty.style.display = 'block'
+						setStatus('USER DATABASE EMPTY')
+						return
+					}
+
+					empty.style.display = 'none'
+
+					users.forEach(user => {
+						const tr = document.createElement('tr')
+
+						tr.innerHTML = `
+
+                   <td class="glow">
+                    ${user.id}
+                   </td>
+
+
+<td>
+${user.full_name}
+</td>
+
+
+<td>
+${user.phone_number ?? 'N/A'}
+</td>
+
+
+<td>
+<span class="status-badge">
+VERSION ${user.version}
+</span>
+</td>
+
+
+<td class="actions-cell">
+
+
+<button
+class="btn"
+onclick='editUser(${JSON.stringify(user)})'>
+EDIT
+</button>
+
+
+<button
+class="btn btn-danger"
+onclick="deleteUser(${user.id})">
+DEL
+</button>
+
+
+</td>
+
+`
+
+						tbody.appendChild(tr)
+					})
+
+					setStatus(`LOADED ${users.length} USER RECORDS`)
+				} catch (err) {
+					setStatus('USER FETCH FAILED: ' + err.message, 'error')
+				}
+			}
+
+			function resetUserForm() {
+				document.getElementById('users-form').reset()
+
+				document.getElementById('user-edit-id').value = ''
+
+				document.getElementById('users-form-title').textContent =
+					'> ADD NEW USER'
+
+				document.getElementById('user-submit-btn').textContent = 'EXECUTE'
+			}
+
+			async function saveUser(e) {
+				e.preventDefault()
+
+				const id = document.getElementById('user-edit-id').value
+
+				const payload = {
+					full_name: document.getElementById('user-full-name').value.trim(),
+
+					phone_number:
+						document.getElementById('user-phone').value.trim() || null,
+				}
+
+				try {
+					if (id) {
+						await api.updateUser(id, payload)
+
+						showAlert('users', `RECORD ${id} UPDATED`)
+					} else {
+						await api.createUser(payload)
+
+						showAlert('users', 'NEW USER CREATED')
+					}
+
+					resetUserForm()
+
+					renderUsers()
+				} catch (err) {
+					setStatus('USER WRITE FAILED: ' + err.message, 'error')
+				}
+
+				return false
+			}
+
+			function editUser(user) {
+				document.getElementById('user-edit-id').value = user.id
+
+				document.getElementById('user-full-name').value = user.full_name
+
+				document.getElementById('user-phone').value = user.phone_number ?? ''
+
+				document.getElementById('users-form-title').textContent =
+					`> EDITING USER ${user.id}`
+
+				document.getElementById('user-submit-btn').textContent = 'UPDATE'
+			}
+
+			async function deleteUser(id) {
+				if (!confirm(`DELETE USER ${id}?`)) return
+
+				try {
+					await api.deleteUser(id)
+
+					showAlert('users', `USER ${id} DELETED`)
+
+					renderUsers()
+				} catch (err) {
+					setStatus('DELETE FAILED: ' + err.message, 'error')
+				}
+			}
+
+			//
+			// ============================================================
+			// TASKS CRUD
+			// ============================================================
+
+			async function refreshUserSelect() {
+				try {
+					const users = await api.getUsers()
+
+					const select = document.getElementById('task-userId')
+
+					select.innerHTML = `
+			<option value="">
+				-- SELECT USER --
+			</option>
+			`
+
+					users.forEach(user => {
+						const option = document.createElement('option')
+
+						option.value = user.id
+
+						option.textContent = `${user.full_name} [${user.id}]`
+
+						select.appendChild(option)
+					})
+				} catch (e) {}
+			}
+
+			async function renderTasks() {
+				setStatus('FETCHING TASK RECORDS...')
+
+				try {
+					const [tasks, users] = await Promise.all([
+						api.getTasks(),
+						api.getUsers(),
+					])
+
+					const userMap = {}
+
+					users.forEach(user => {
+						userMap[user.id] = user.full_name
+					})
+
+					const tbody = document.getElementById('tasks-table-body')
+
+					const empty = document.getElementById('tasks-empty')
+
+					tbody.innerHTML = ''
+
+					tasks.forEach(task => {
+						const tr = document.createElement('tr')
+
+						tr.innerHTML = `
+
+
+			<td class="glow">
+				${task.id}
+			</td>
+
+
+			<td>
+				${task.title}
+			</td>
+
+
+			<td>
+
+				<span class="status-badge">
+
+				${task.completed ? 'COMPLETED' : 'ACTIVE'}
+
+				</span>
+
+			</td>
+
+
+
+			<td>
+				${userMap[task.author_user_id] ?? 'UNKNOWN'}
+			</td>
+
+
+
+			<td class="actions-cell">
+
+
+				<button
+					class="btn"
+					onclick='editTask(${JSON.stringify(task)})'>
+					EDIT
+				</button>
+
+
+
+				<button
+					class="btn btn-danger"
+					onclick="deleteTask(${task.id})">
+					DEL
+				</button>
+
+
+			</td>
+
+
+			`
+
+						tbody.appendChild(tr)
+					})
+
+					empty.style.display = tasks.length ? 'none' : 'block'
+
+					setStatus(`LOADED ${tasks.length} TASK RECORDS`)
+				} catch (err) {
+					setStatus('TASK FETCH FAILED: ' + err.message, 'error')
+				}
+			}
+
+			function resetTaskForm() {
+				document.getElementById('tasks-form').reset()
+
+				document.getElementById('task-edit-id').value = ''
+			}
+
+			async function saveTask(e) {
+				e.preventDefault()
+
+				const id = document.getElementById('task-edit-id').value
+
+				const payload = {
+					title: document.getElementById('task-title').value.trim(),
+
+					description:
+						document.getElementById('task-desc').value.trim() || null,
+
+					completed: document.getElementById('task-completed').checked,
+				}
+
+				try {
+					if (id) {
+						await api.updateTask(id, payload)
+					} else {
+						await api.createTask(payload)
+					}
+
+					resetTaskForm()
+
+					renderTasks()
+				} catch (err) {
+					setStatus('TASK WRITE FAILED: ' + err.message, 'error')
+				}
+
+				return false
+			}
+
+			function editTask(task) {
+				document.getElementById('task-edit-id').value = task.id
+
+				document.getElementById('task-title').value = task.title
+
+				document.getElementById('task-desc').value = task.description ?? ''
+
+				document.getElementById('task-completed').checked = task.completed
+			}
+
+			async function deleteTask(id) {
+				if (!confirm(`DELETE TASK ${id}?`)) return
+
+				try {
+					await api.deleteTask(id)
+
+					renderTasks()
+				} catch (err) {
+					setStatus('TASK DELETE FAILED: ' + err.message, 'error')
+				}
+			}
+
+			// ============================================================
+			// BOOT
+			// ============================================================
+
+			const bootLines = [
+				'ROBCO INDUSTRIES TERMINAL',
+				'INITIALIZING...',
+				'LOADING USER MODULE...',
+				'LOADING TASK MODULE...',
+				'SYSTEM READY',
+			]
+
+			async function runBoot() {
+				const out = document.getElementById('boot-text')
+
+				let text = ''
+
+				for (const line of bootLines) {
+					text += line + '\n'
+
+					out.textContent = text
+
+					await new Promise(r => setTimeout(r, 300))
+				}
+
+				document.getElementById('boot-screen').style.display = 'none'
+
+				document.getElementById('app').style.display = 'flex'
+
+				renderUsers()
+
+				setStatus('READY')
+			}
+
+			// INIT
+
+			document.addEventListener('DOMContentLoaded', () => {
+				runBoot()
+			})
+		</script>
+	</body>
+</html>

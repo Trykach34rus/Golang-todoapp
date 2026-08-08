@@ -100,8 +100,8 @@ definitions:
   tasks_transport_http.PatchTaskRequest:
     properties:
       completed:
-        example: "true"
-        type: string
+        example: true
+        type: boolean
       description:
         example: Очень подробное описание что нужно по тренировать
         type: string
@@ -628,7 +628,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/core_http_response.ErrorResponse'
-      summary: Изменить задачу
+      summary: Изменить пользователя
       tags:
       - users
 swagger: "2.0"

@@ -504,7 +504,7 @@
                 "tags": [
                     "users"
                 ],
-                "summary": "Изменить задачу",
+                "summary": "Изменить пользователя",
                 "parameters": [
                     {
                         "type": "integer",
@@ -696,8 +696,8 @@
             "type": "object",
             "properties": {
                 "completed": {
-                    "type": "string",
-                    "example": "true"
+                    "type": "boolean",
+                    "example": true
                 },
                 "description": {
                     "type": "string",

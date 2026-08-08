@@ -510,7 +510,7 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Изменить задачу",
+                "summary": "Изменить пользователя",
                 "parameters": [
                     {
                         "type": "integer",
@@ -702,8 +702,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "completed": {
-                    "type": "string",
-                    "example": "true"
+                    "type": "boolean",
+                    "example": true
                 },
                 "description": {
                     "type": "string",

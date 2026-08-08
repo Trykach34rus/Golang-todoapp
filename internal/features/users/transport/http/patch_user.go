@@ -21,7 +21,7 @@ type PatchUserResponse UserDTOResponse
 
 
 // PatchUser    godoc
-// @Summary     Изменить задачу
+// @Summary     Изменить пользователя
 // @Description Изменение информации об уже существующем пользователе
 // @Description ### Логика обновления полей (Three-state logic):
 // @Description 1.**Поле не передано**: `phone_number` игнорируется, значение в БД не меняется 

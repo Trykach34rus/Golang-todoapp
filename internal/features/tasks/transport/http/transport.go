@@ -59,17 +59,17 @@ func (h *TasksHTTPHandler) Routes() []core_http_server.Route {
 		},
 		{
 			Method: http.MethodGet,
-			Path: "/task/{id}",
+			Path: "/tasks/{id}",
 			Handler: h.GetTask,
 		},
 		{
 			Method: http.MethodDelete,
-			Path: "/task/{id}",
+			Path: "/tasks/{id}",
 			Handler: h.DeleteTask,
 		},
 		{
 			Method: http.MethodPatch,
-			Path: "/task/{id}",
+			Path: "/tasks/{id}",
 			Handler: h.PatchTask,
 		},
 	}

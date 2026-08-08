@@ -14,7 +14,7 @@ import (
 type PatchTaskRequest struct {
 	Title core_http_types.Nullable[string] `json:"title" swaggertype:"string" example:"Сходить в зал"`
 	Description core_http_types.Nullable[string] `json:"description" swaggertype:"string" example:"Очень подробное описание что нужно по тренировать"`
-	Completed core_http_types.Nullable[bool] `json:"completed" swaggertype:"string" example:"true"`
+	Completed core_http_types.Nullable[bool] `json:"completed" swaggertype:"boolean" example:"true"`
 } 
 
 type PatchTaskResponse TaskDTOResponse
