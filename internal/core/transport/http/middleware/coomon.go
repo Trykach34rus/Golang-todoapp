@@ -47,8 +47,8 @@ func RequestID() Middleware {
 			if requestID == "" {
 				requestID = uuid.NewString() 
 			}
-			r.Header.Set(requestIDHeader,requestIDHeader)
-			w.Header().Set(requestIDHeader,requestIDHeader)
+        r.Header.Set(requestIDHeader, requestID)
+        w.Header().Set(requestIDHeader, requestID)
 
 			next.ServeHTTP(w,r)
  		})

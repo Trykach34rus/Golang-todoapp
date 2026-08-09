@@ -6,7 +6,6 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "127.0.0.1:5050",
     "basePath": "/api/v1",
     "paths": {
         "/statistics": {

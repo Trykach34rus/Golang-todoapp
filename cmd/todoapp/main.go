@@ -33,7 +33,7 @@ import (
 // @title       Golang Todo API
 // @version     1.0
 // @description Todo Application REST-API/gRPC schema
-// @host        127.0.0.1:5050
+// @host
 // @BasePath    /api/v1
 func main() {
 	cfg := core_config.NewConfigMust()
