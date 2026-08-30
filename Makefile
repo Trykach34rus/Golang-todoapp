@@ -1,143 +1,47 @@
 include .env
 export
 
+
 export PROJECT_ROOT=$(shell pwd)
 
-# ------------------------------------------------------------
-# env-up: запустить контейнер с БД
-# ------------------------------------------------------------
-env-up:
-	@docker compose up -d todoapp-postgres
+
+.DEFAULT_GOAL := help
 
 
-# ------------------------------------------------------------
-# env-down: остановить контейнер БД
-# ------------------------------------------------------------
-env-down:
-	@docker compose down todoapp-postgres
+env-up: ## env: Запустить окружение проекта
+	@docker compose up -d todoapp-postgres todoapp-redis
 
+env-down: ## env: Остановить окружение проекта
+	@docker compose down todoapp-postgres todoapp-redis
 
-# ------------------------------------------------------------
-# port-forwarder-up: запустить форвардер портов
-# ------------------------------------------------------------
-env-port-forwarder-up:
-	@docker compose up -d port-forwarder
-
-
-# ------------------------------------------------------------
-# port-forwarder-down: остановить форвардер
-# ------------------------------------------------------------
-env-port-forwarder-down:
-	@docker compose down port-forwarder
-
-
-# ------------------------------------------------------------
-# env-cleanup: удалить окружение и данные postgres
-# ------------------------------------------------------------
-env-cleanup:
+env-cleanup: ## env: Очистить окружение проекта
 	@read -p "Очистить все volume файлы окружения? Опасность утери данных. [y/N]: " ans; \
 	if [ "$$ans" = "y" ]; then \
-		docker compose down todoapp-postgres port-forwarder && \
-		rm -rf $(PROJECT_ROOT)/out/pgdata && \
-		echo "Файлы окружения удалены"; \
+		docker compose down todoapp-postgres todoapp-redis port-forwarder web-server && \
+		rm -rf ${PROJECT_ROOT}/out/pgdata && \
+		rm -rf ${PROJECT_ROOT}/out/redis_data && \
+		rm -rf ${PROJECT_ROOT}/out/caddy_data && \
+		echo "Файлы окружения очищены"; \
 	else \
 		echo "Очистка окружения отменена"; \
 	fi
 
+env-port-forward: ## env: Открыть порты сервисов окружения
+	@docker compose up -d port-forwarder
 
-# ------------------------------------------------------------
-# migrate-create: создать миграцию
-# пример:
-# make migrate-create seq=init
-# ------------------------------------------------------------
-migrate-create:
-	@if [ -z "$(seq)" ]; then \
-		echo "Отсутствует seq. Пример: make migrate-create seq=init"; \
-		exit 1; \
-	fi; \
-	docker compose run --rm \
-		--network todoapp-network \
-		todoapp-postgres-migrate \
-		-create \
-		-ext sql \
-		-dir /migrations \
-		-seq "$(seq)"
+env-port-close: ## env: Закрыть порты сервисов окружения
+	@docker compose down port-forwarder
 
-
-# ------------------------------------------------------------
-# migrate-action: выполнить миграцию
-# пример:
-# make migrate-action action=up
-# ------------------------------------------------------------
-migrate-action:
-	@if [ -z "$(action)" ]; then \
-		echo "Отсутствует необходимый параметр для action. Пример: make migrate-action action=up"; \
-		exit 1; \
-	fi; \
-	docker compose run --rm \
-		todoapp-postgres-migrate \
-		-path=/migrations \
-		-database="postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@todoapp-postgres:5432/$(POSTGRES_DB)?sslmode=disable" \
-		$(action)
-
-
-# ------------------------------------------------------------
-# применить миграции
-# ------------------------------------------------------------
-migrate-up:
-	@$(MAKE) migrate-action action=up
-
-
-# ------------------------------------------------------------
-# откатить последнюю миграцию
-# ------------------------------------------------------------
-migrate-down:
-	@$(MAKE) migrate-action action=down
-
-
-# ------------------------------------------------------------
-# очистка логов
-# ------------------------------------------------------------
-log-cleanup:
-	@read -p "Очистить все log файлы? [y/N]: " ans; \
+logs-cleanup: ## env: Очистить файлы логов из out/logs
+	@read -p "Очистить все log файлы? Опасность утери логов. [y/N]: " ans; \
 	if [ "$$ans" = "y" ]; then \
-		docker compose down todoapp-postgres port-forwarder && \
-		rm -rf $(PROJECT_ROOT)/out/logs && \
-		echo "Логи удалены"; \
+		rm -rf ${PROJECT_ROOT}/out/logs && \
+		echo "Файлы логов очищены"; \
 	else \
-		echo "Очистка отменена"; \
+		echo "Очистка логов отменена"; \
 	fi
 
-
-# ------------------------------------------------------------
-# запуск приложения локально
-# ------------------------------------------------------------
-todoapp-run:
-	@export LOGGER_FOLDER=$(PROJECT_ROOT)/out/logs && \
-	export POSTGRES_HOST=localhost && \
-	go mod tidy && \
-	go run $(PROJECT_ROOT)/cmd/todoapp/main.go
-
-
-# ------------------------------------------------------------
-# деплой приложения через docker
-# ------------------------------------------------------------
-todoapp-deploy:
-	@docker compose up -d --build todoapp
-
-
-# ------------------------------------------------------------
-# остановить приложение
-# ------------------------------------------------------------
-todoapp-undeploy:
-	@docker compose down todoapp
-
-
-# ------------------------------------------------------------
-# статус контейнеров
-# ------------------------------------------------------------
-
-swagger-gen:
+swagger-gen: ## env: Сгенерировать актуальную Swagger спецификацию
 	@docker compose run --rm swagger \
 		init \
 		-g cmd/todoapp/main.go \
@@ -145,6 +49,62 @@ swagger-gen:
 		--parseInternal \
 		--parseDependency
 
-ps:
+ps: ## env: Посмотреть запущенные Docker Compose сервисы
 	@docker compose ps
 
+migrate-create: ## PostgreSQL: Создать новую версию схемы данных
+	@if [ -z "$(seq)" ]; then \
+		echo "Отсутсвует необходимый параметр seq. Пример: make migrate-create seq=init"; \
+		exit 1; \
+	fi; \
+	docker compose run --rm todoapp-postgres-migrate \
+		create \
+		-ext sql \
+		-dir /migrations \
+		-seq "$(seq)"
+
+migrate-up: ## PostgreSQL: Накатить миграции
+	@make migrate-action action=up
+
+migrate-down: ## PostgreSQL: Откатить миграции
+	@make migrate-action action=down
+
+migrate-action:
+	@if [ -z "$(action)" ]; then \
+		echo "Отсутсвует необходимый параметр action. Пример: make migrate-action action=up"; \
+		exit 1; \
+	fi; \
+	docker compose run --rm todoapp-postgres-migrate \
+		-path /migrations \
+		-database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@todoapp-postgres:5432/${POSTGRES_DB}?sslmode=disable \
+		"$(action)"
+
+todoapp-run: ## Golang приложение: Запустить локально на хост-системе (для локальной разработки)
+	@export LOGGER_FOLDER=${PROJECT_ROOT}/out/logs && \
+	export POSTGRES_HOST=localhost && \
+	export REDIS_HOST=localhost && \
+	go mod tidy && \
+	go run ${PROJECT_ROOT}/cmd/todoapp/main.go
+
+todoapp-deploy: ## Golang приложение: Запустить в Docker Compose сервисе (для деплоя)
+	@docker compose up -d --build todoapp
+
+todoapp-undeploy: ## Golang приложение: Остановить Docker Compose сервис
+	@docker compose down todoapp
+
+load-test: ## Тесты: нагрузочное тестирование
+	@go run scripts/load_test/main.go \
+		-users 10 \
+		-tasks-per-user 1000 \
+		-concurrency 100 \
+		-phase-duration 30s \
+		-read-burst 50 \
+		-mixed-reads 10 \
+		-mixed-writes 1 \
+		-report ${PROJECT_ROOT}/out/load_test/result.txt
+
+help: ## Показать справку по командам
+	@echo "=== Центр управления проектом ==="
+	@echo ""
+	@echo "Доступные команды:"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

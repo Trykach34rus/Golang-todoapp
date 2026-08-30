@@ -11,11 +11,13 @@ import (
 	core_config "github.com/Trykach34rus/Golang-todoapp/internal/core/config"
 	core_logger "github.com/Trykach34rus/Golang-todoapp/internal/core/logger"
 	core_pgx_pool "github.com/Trykach34rus/Golang-todoapp/internal/core/repository/postges/pool/pgx"
+	core_goredis_pool "github.com/Trykach34rus/Golang-todoapp/internal/core/repository/redis/pool/goredis"
 	core_http_middleware "github.com/Trykach34rus/Golang-todoapp/internal/core/transport/http/middleware"
 	core_http_server "github.com/Trykach34rus/Golang-todoapp/internal/core/transport/http/server"
 	postgres_statistics_repository "github.com/Trykach34rus/Golang-todoapp/internal/features/stasistics/repository/postgres"
 	service_statistics "github.com/Trykach34rus/Golang-todoapp/internal/features/stasistics/service"
 	statistics_tansport_http "github.com/Trykach34rus/Golang-todoapp/internal/features/stasistics/transport/http"
+	cached_repository "github.com/Trykach34rus/Golang-todoapp/internal/features/tasks/repository/cached"
 	task_postgres_repository "github.com/Trykach34rus/Golang-todoapp/internal/features/tasks/repository/postgres"
 	task_service "github.com/Trykach34rus/Golang-todoapp/internal/features/tasks/service"
 	tasks_transport_http "github.com/Trykach34rus/Golang-todoapp/internal/features/tasks/transport/http"
@@ -68,6 +70,15 @@ func main() {
 
 	defer pool.Close()
 
+	redisPool, err := core_goredis_pool.NewPool(
+		ctx,
+		core_goredis_pool.NewConfigMust(),
+	)
+	if err != nil {
+		logger.Fatal("failed to init redis connection pool", zap.Error(err))
+	}
+
+	defer redisPool.Close()
 
 	logger.Debug("initiazling feature",zap.String("feature","users"))
 	usersRepository := users_postgres_repository.NewUsersRepository(pool)
@@ -76,7 +87,14 @@ func main() {
 
 	logger.Debug("initiazling feature",zap.String("feature","task"))
 	tasksRepository := task_postgres_repository.NewTaskRepository(pool)
-	taskService := task_service.NewTaskService(tasksRepository)
+
+	tasksCachedRepository := cached_repository.NewCachedRepository(
+		redisPool,
+		tasksRepository,
+	)
+
+	taskService := task_service.NewTaskService(tasksCachedRepository)
+
 	tasksTransportHTTP := tasks_transport_http.NewTasksHTTPHandler(taskService)
 
 	logger.Debug("initiazling feature",zap.String("feature","statistics"))
@@ -102,7 +120,7 @@ func main() {
 	core_http_middleware.Panic(),
   ) 	
 	
-	apiVersionRouter1 := core_http_server.NewApiVersionRouter(core_http_server.ApiVersion1)
+	apiVersionRouter1 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
 
 
   // Example of usage apiVersionRouter2 separate Middleware
@@ -114,9 +132,9 @@ func main() {
 	// apiVersionRouter2.RegisterRoutes(usersTransportHTTP.Routes()...)
 	// )
 
-	apiVersionRouter1.RegisterRoutes(usersTransportHTTP.Routes()...)
-	apiVersionRouter1.RegisterRoutes(tasksTransportHTTP.Routes()...)
-	apiVersionRouter1.RegisterRoutes(statisticTransportHTTP.Routes()...)
+	apiVersionRouter1.AddRoutes(usersTransportHTTP.Routes()...)
+	apiVersionRouter1.AddRoutes(tasksTransportHTTP.Routes()...)
+	apiVersionRouter1.AddRoutes(statisticTransportHTTP.Routes()...)
 
 
 	httpServer.RegisterAPIRouters(apiVersionRouter1)
