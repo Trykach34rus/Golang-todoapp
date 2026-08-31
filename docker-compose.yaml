@@ -16,6 +16,12 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_TIMEOUT: ${POSTGRES_TIMEOUT}
 
+      REDIS_HOST: todoapp-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DB: 0
+      REDIS_TTL: ${REDIS_TTL}
+
       LOGGER_LEVEL: ${LOGGER_LEVEL}
       TIME_ZONE: ${TIME_ZONE}
       LOGGER_FOLDER: /app/out/logs
@@ -28,6 +34,7 @@ services:
 
     depends_on:
       - todoapp-postgres
+      - todoapp-redis
 
     restart: always
 
@@ -63,12 +70,21 @@ services:
 
     networks:
       - todoapp-network
+
   todoapp-redis:
     image: redis:8.6.1
+
     container_name: todoapp-env-redis
+
     command: redis-server --requirepass ${REDIS_PASSWORD}
-    volumes: -${PROJECT_ROOT}/out/redis_data:/data
+
+    volumes:
+      - ${PROJECT_ROOT}/out/redis_data:/data
+
     restart: always
+
+    networks:
+      - todoapp-network
 
   port-forwarder:
     image: alpine/socat:1.8.1.1

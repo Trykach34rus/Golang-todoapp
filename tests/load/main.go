@@ -31,7 +31,7 @@ var (
 	phaseDuration   = flag.Duration("phase-duration", 20*time.Second, "Длительность каждой фазы")
 	readBurstCount  = flag.Int("read-burst", 10, "GET подряд в read-heavy итерации")
 	mixedReadCount  = flag.Int("mixed-reads", 3, "GET между мутациями в mixed")
-	mixedWriteCount = flag.Int("mixed-writes", 3, "Мутаций (POST+PATCH+DELETE) в mixed")
+	mixedWriteCount = flag.Int("mixed-writes", 3, "Мутаций (POST+PATCH) в mixed (без DELETE)")
 	reportFile      = flag.String("report", "load_test_report.txt", "Путь для текстового отчёта")
 )
 
@@ -48,13 +48,13 @@ type UserResponse struct {
 }
 
 type CreateTaskRequest struct {
-	Title        string    `json:"title"`
-	Description  string    `json:"description,omitempty"`
-	AuthorUserID int `json:"author_user_id"`
+	Title        string `json:"title"`
+	Description  string `json:"description,omitempty"`
+	AuthorUserID int    `json:"author_user_id"`
 }
 type TaskResponse struct {
 	ID      int `json:"id"`
-	Version int       `json:"version"`
+	Version int `json:"version"`
 }
 type PatchTaskRequest struct {
 	Title     *string `json:"title,omitempty"`
@@ -331,28 +331,20 @@ func readHeavyWorker(
 			if len(myTasks) > 0 {
 				tid := myTasks[rand.Intn(len(myTasks))]
 				start := time.Now()
-			resp, body, err := doJSON(
-    		http.MethodGet,
-    		fmt.Sprintf("%s/tasks/%d", base, tid),
-   			nil,
-			)
-
-			success := err == nil && resp.StatusCode == http.StatusOK
-
-			if !success {
-    		if err != nil {
-        	fmt.Printf("\nGET /tasks/%d ERROR: %v\n", tid, err)
-   			} else {
-        fmt.Printf(
-            "\nGET /tasks/%d STATUS: %d BODY: %s\n",
-            tid,
-            resp.StatusCode,
-            string(body),
-        	)
-    	}
-		}
-
-			sGetByID.Record(time.Since(start), success)
+				resp, body, err := doJSON(
+					http.MethodGet,
+					fmt.Sprintf("%s/tasks/%d", base, tid),
+					nil,
+				)
+				success := err == nil && resp.StatusCode == http.StatusOK
+				if !success {
+					if err != nil {
+						fmt.Printf("\nGET /tasks/%d ERROR: %v\n", tid, err)
+					} else {
+						fmt.Printf("\nGET /tasks/%d STATUS: %d BODY: %s\n", tid, resp.StatusCode, string(body))
+					}
+				}
+				sGetByID.Record(time.Since(start), success)
 			}
 			{
 				url := fmt.Sprintf("%s/tasks?user_id=%d&limit=10&offset=%d",
@@ -366,10 +358,11 @@ func readHeavyWorker(
 	}
 }
 
+// mixedWorker теперь выполняет только POST и PATCH (без DELETE)
 func mixedWorker(
 	stop <-chan struct{}, wg *sync.WaitGroup,
 	base string, ID int, allIDs []int, tasksByUser map[int][]int,
-	sListSelf, sListOther, sGetByID, sPost, sPatch, sDelete *Stats,
+	sListSelf, sListOther, sGetByID, sPost, sPatch *Stats,
 	iters *atomic.Int64,
 ) {
 	defer wg.Done()
@@ -384,6 +377,7 @@ func mixedWorker(
 		otherUID := pickOther(ID, allIDs)
 		otherTasks := tasksByUser[otherUID]
 
+		// Чтения
 		for i := 0; i < *mixedReadCount; i++ {
 			select {
 			case <-stop:
@@ -412,12 +406,14 @@ func mixedWorker(
 			}
 		}
 
+		// Мутации: POST и PATCH (без DELETE)
 		for i := 0; i < *mixedWriteCount; i++ {
 			select {
 			case <-stop:
 				return
 			default:
 			}
+			// POST
 			{
 				start := time.Now()
 				resp, body, err := doJSON(http.MethodPost, base+"/tasks", CreateTaskRequest{
@@ -434,22 +430,15 @@ func mixedWorker(
 					}
 				}
 			}
+			// PATCH (если есть задачи)
 			if len(myTasks) > 0 {
 				tid := myTasks[rand.Intn(len(myTasks))]
 				start := time.Now()
 				resp, _, err := doJSON(http.MethodPatch, fmt.Sprintf("%s/tasks/%d", base, tid), PatchTaskRequest{
-					Title: strPtr(fmt.Sprintf("Upd %s", randomString(4))), Completed: boolPtr(rand.Intn(2) == 1),
+					Title:     strPtr(fmt.Sprintf("Upd %s", randomString(4))),
+					Completed: boolPtr(rand.Intn(2) == 1),
 				})
 				sPatch.Record(time.Since(start), err == nil && resp.StatusCode == 200)
-			}
-			if len(myTasks) > 1 {
-				idx := rand.Intn(len(myTasks))
-				tid := myTasks[idx]
-				myTasks[idx] = myTasks[len(myTasks)-1]
-				myTasks = myTasks[:len(myTasks)-1]
-				start := time.Now()
-				resp, _, err := doJSON(http.MethodDelete, fmt.Sprintf("%s/tasks/%d", base, tid), nil)
-				sDelete.Record(time.Since(start), err == nil && resp.StatusCode == 204)
 			}
 		}
 		iters.Add(1)
@@ -526,12 +515,13 @@ func runPhase(
 type TestResult struct {
 	ReadSnaps       []Snap
 	MixedReadSnaps  []Snap
-	MixedWriteSnaps []Snap
+	MixedWriteSnaps []Snap // теперь только POST и PATCH
 }
 
 func runFullTest(base string, userIDs []int, tasksByUser map[int][]int) TestResult {
 	warmUpCache(base, userIDs)
 
+	// READ-HEAVY
 	rSelf := NewStats("GET /tasks?user_id=self")
 	rOther := NewStats("GET /tasks?user_id=other")
 	rByID := NewStats("GET /tasks/{id}")
@@ -542,22 +532,23 @@ func runFullTest(base string, userIDs []int, tasksByUser map[int][]int) TestResu
 
 	warmUpCache(base, userIDs)
 
+	// MIXED
 	mSelf := NewStats("GET /tasks?user_id=self")
 	mOther := NewStats("GET /tasks?user_id=other")
 	mByID := NewStats("GET /tasks/{id}")
 	mPost := NewStats("POST /tasks")
 	mPatch := NewStats("PATCH /tasks/{id}")
-	mDel := NewStats("DELETE /tasks/{id}")
+	// DELETE больше нет
 	runPhase("MIXED", *phaseDuration, *concurrency, base, userIDs, tasksByUser,
 		func(stop <-chan struct{}, wg *sync.WaitGroup, uid int, iters *atomic.Int64) {
 			mixedWorker(stop, wg, base, uid, userIDs, tasksByUser,
-				mSelf, mOther, mByID, mPost, mPatch, mDel, iters)
+				mSelf, mOther, mByID, mPost, mPatch, iters)
 		})
 
 	return TestResult{
 		ReadSnaps:       []Snap{rSelf.Snapshot(), rOther.Snapshot(), rByID.Snapshot()},
 		MixedReadSnaps:  []Snap{mSelf.Snapshot(), mOther.Snapshot(), mByID.Snapshot()},
-		MixedWriteSnaps: []Snap{mPost.Snapshot(), mPatch.Snapshot(), mDel.Snapshot()},
+		MixedWriteSnaps: []Snap{mPost.Snapshot(), mPatch.Snapshot()}, // только POST и PATCH
 	}
 }
 
@@ -640,7 +631,7 @@ func fprintHeader(w io.Writer) {
 	fmt.Fprintf(w, "  Concurrency:      %d\n", *concurrency)
 	fmt.Fprintf(w, "  Phase duration:   %s\n", *phaseDuration)
 	fmt.Fprintf(w, "  Read burst:       %d\n", *readBurstCount)
-	fmt.Fprintf(w, "  Mixed r/w:        %d reads + %d writes\n", *mixedReadCount, *mixedWriteCount)
+	fmt.Fprintf(w, "  Mixed r/w:        %d reads + %d writes (POST+PATCH, без DELETE)\n", *mixedReadCount, *mixedWriteCount)
 	fmt.Fprintln(w)
 }
 
@@ -720,7 +711,7 @@ func main() {
 
 	fprintSnapTable(out, "A / READ-HEAVY (только чтение)", resultA.ReadSnaps)
 	fprintSnapTable(out, "A / MIXED — чтение", resultA.MixedReadSnaps)
-	fprintSnapTable(out, "A / MIXED — мутации", resultA.MixedWriteSnaps)
+	fprintSnapTable(out, "A / MIXED — мутации (POST+PATCH)", resultA.MixedWriteSnaps)
 
 	// Flush чтобы в файле было всё до паузы
 	bw.Flush()
@@ -754,7 +745,7 @@ func main() {
 
 	fprintSnapTable(out, "B / READ-HEAVY (только чтение)", resultB.ReadSnaps)
 	fprintSnapTable(out, "B / MIXED — чтение", resultB.MixedReadSnaps)
-	fprintSnapTable(out, "B / MIXED — мутации", resultB.MixedWriteSnaps)
+	fprintSnapTable(out, "B / MIXED — мутации (POST+PATCH)", resultB.MixedWriteSnaps)
 
 	// ══════════════════════════════════════════════════════════════════════
 	//  Сравнение A vs B
@@ -763,7 +754,7 @@ func main() {
 	fprintCrossCompare(out, "no-cache", "with-cache", []compareSection{
 		{"READ-HEAVY (только чтение)", resultA.ReadSnaps, resultB.ReadSnaps},
 		{"MIXED — чтение (кеш инвалидируется)", resultA.MixedReadSnaps, resultB.MixedReadSnaps},
-		{"MIXED — мутации", resultA.MixedWriteSnaps, resultB.MixedWriteSnaps},
+		{"MIXED — мутации (POST+PATCH)", resultA.MixedWriteSnaps, resultB.MixedWriteSnaps},
 	})
 
 	// Flush файл перед teardown
