@@ -85,6 +85,8 @@ services:
 
     networks:
       - todoapp-network
+    ports:
+      - '6379:6379'
 
   port-forwarder:
     image: alpine/socat:1.8.1.1
