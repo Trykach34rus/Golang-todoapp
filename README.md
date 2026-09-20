@@ -45,19 +45,23 @@ REST + gRPC backend приложение для управления польз�
 # 🏗 Architecture
 
 ```text
-                    Client
-               (REST / gRPC)
-                      │
-        ┌─────────────┴─────────────┐
-        │      Transport Layer      │
-        │   HTTP        │   gRPC    │
-        └─────────────┬─────────────┘
-                      │
-               Service Layer
-                      │
-             Repository Layer
-                      │
-                 PostgreSQL
+                  ┌─────────────┐
+                  │   Client    │
+                  └──────┬──────┘
+                         │
+              ┌──────────┴──────────┐
+              │                     │
+           REST API              gRPC
+              │                     │
+              └──────────┬──────────┘
+                         │
+                    ┌────▼────┐
+                    │ Service │
+                    └────┬────┘
+                         │
+                ┌────────┴────────┐
+                │                 │
+           PostgreSQL           Redis
 ```
 
 The project separates business logic from transport and infrastructure.
