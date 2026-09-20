@@ -12,6 +12,7 @@ REST + gRPC backend приложение для управления польз�
 
 * **Go**
 * **PostgreSQL**
+* **Redis**
 * **pgx / pgxpool**
 * **REST API**
 * **gRPC**
